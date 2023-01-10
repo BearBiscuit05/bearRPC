@@ -1,5 +1,5 @@
 #!/bin/bash
-mkdir build
-cd build
+mkdir -p ../build
+cd ../build
 cmake ../src/partition
 make
