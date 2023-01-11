@@ -42,8 +42,7 @@ void fileToTrainList(string filepath, vector<int>& trainNodeList)
     {
         int nodeId;
         Gin >> nodeId;
-        trainNodeList.push_back(nodeId+100000);
-        //trainNodeList.push_back(nodeId + rand() % 100000 - rand() % 9022);
+        trainNodeList.push_back(nodeId);
     }
     Gin.close();
 }

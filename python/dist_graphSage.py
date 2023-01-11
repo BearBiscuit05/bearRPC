@@ -269,7 +269,7 @@ def main(args):
 
     pb = g.get_partition_book()
 
-    self = True
+    self = False
     if self:
         print("=======================================")
         train_mask = th.rand(g.number_of_nodes())
