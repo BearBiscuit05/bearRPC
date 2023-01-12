@@ -71,7 +71,7 @@ if __name__ == '__main__':
     argparser = argparse.ArgumentParser("Partition builtin graphs")
     argparser.add_argument('--dataset', type=str, default='ogb-product',
                            help='datasets: reddit, ogb-product, ogb-paper100M')
-    argparser.add_argument('--num_parts', type=int, default=2,
+    argparser.add_argument('--num_parts', type=int, default=4,
                            help='number of partitions')
     argparser.add_argument('--part_method', type=str, default='metis',
                            help='the partition method')
@@ -98,12 +98,13 @@ if __name__ == '__main__':
     print('load {} takes {:.3f} seconds'.format(args.dataset, time.time() - start))
     print('|V|={}, |E|={}'.format(g.number_of_nodes(), g.number_of_edges()))    
     # 2.测试不使用平衡策略 196615 
-    # g.ndata['train_mask'][:] = False
-    # g.ndata['val_mask'][:] = False
-    # g.ndata['test_mask'][:] = False
-    # g.ndata['train_mask'][-196615:-1] = True
-    # g.ndata['val_mask'][:36000] = True
-    # g.ndata['test_mask'][36000:-196616] = True
+    g.ndata['train_mask'][:] = False
+    g.ndata['val_mask'][:] = False
+    g.ndata['test_mask'][:] = False
+    trainNum = 240000 * 2
+    g.ndata['train_mask'][0:trainNum] = True
+    g.ndata['val_mask'][trainNum+1:trainNum+36000] = True
+    g.ndata['test_mask'][trainNum+36001:] = True
     print('train: {}, valid: {}, test: {}'.format(th.sum(g.ndata['train_mask']),
                                                   th.sum(g.ndata['val_mask']),
                                                   th.sum(g.ndata['test_mask'])))
@@ -111,8 +112,7 @@ if __name__ == '__main__':
     # print("val_mask id : {} , size : {} ".format(g.ndata['val_mask'],len(g.ndata['val_mask'])))
     # print("test_mask id : {} , size : {} ".format(g.ndata['test_mask'],len(g.ndata['test_mask'])))
     if args.balance_train:
-        balance_ntypes = None
-        #balance_ntypes = g.ndata['train_mask']
+        balance_ntypes = g.ndata['train_mask']
     else:
         balance_ntypes = None
 
