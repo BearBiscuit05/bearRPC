@@ -1,2 +1,2 @@
-add_executable(parse11 parse.cc)
-target_link_libraries(parse11 jackson)
+add_executable(read test/readFile.cc)
+target_link_libraries(read jackson)

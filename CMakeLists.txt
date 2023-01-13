@@ -6,7 +6,7 @@ set(CXX_FLAGS
         -fno-omit-frame-pointer # linux perf
         -Wall
         -Wextra
-        -Werror
+#        -Werror
         -Wconversion
         -Wno-unused-parameter
         -Wold-style-cast
@@ -28,3 +28,4 @@ include_directories(
 SET(EXECUTABLE_OUTPUT_PATH ${PROJECT_SOURCE_DIR}/build/bin)
 add_subdirectory(3rd/tinyev )
 add_subdirectory(3rd/jackson)
+add_subdirectory(src/RPC)
