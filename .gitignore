@@ -10,6 +10,7 @@ __pycache__/
 *.so
 
 # Distribution / packaging
+cmake-build-debug/
 data/
 .Python
 build/
