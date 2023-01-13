@@ -57,6 +57,66 @@ void BaseServer<ProtocolServer>::onWriteComplete(const TcpConnectionPtr& conn)
 }
 
 template <typename ProtocolServer>
+void BaseServer<ProtocolServer>::handleMessage(const TcpConnectionPtr& conn, Buffer& buffer)
+{
+    while (true) {
+
+        const char *crlf = buffer.findCRLF();
+        if (crlf == nullptr)
+            break;
+        if (crlf == buffer.peek()) {
+            buffer.retrieve(2);
+            break;
+        }
+
+        size_t headerLen = crlf - buffer.peek() + 2;
+
+        json::Document header;
+        auto err = header.parse(buffer.peek(), headerLen);
+        if (err != json::PARSE_OK ||
+            !header.isInt32() ||
+            header.getInt32() <= 0)
+        {
+            throw RequestException(RPC_INVALID_REQUEST, "invalid message length");
+        }
+
+        auto jsonLen = static_cast<uint32_t>(header.getInt32());
+        if (jsonLen >= kMaxMessageLen)
+            throw RequestException(RPC_INVALID_REQUEST, "message is too long");
+
+        if (buffer.readableBytes() < headerLen + jsonLen)
+            break;
+
+        buffer.retrieve(headerLen);
+        auto json = buffer.retrieveAsString(jsonLen);
+        convert().handleRequest(json, [conn, this](json::Value response) {
+            if (!response.isNull()) {
+                sendResponse(conn, response);
+                TRACE("BaseServer::handleMessage() %s request success",
+                      conn->peer().toIpPort().c_str());
+            }
+            else {
+                TRACE("BaseServer::handleMessage() %s notify success",
+                      conn->peer().toIpPort().c_str());
+            }
+        });
+    }
+}
+
+template <typename ProtocolServer>
+json::Value BaseServer<ProtocolServer>::wrapException(RequestException& e)
+{
+    json::Value response(json::TYPE_OBJECT);
+    response.addMember("jsonrpc", "2.0");
+    auto& value = response.addMember("error", json::TYPE_OBJECT);
+    value.addMember("code", e.err().asCode());
+    value.addMember("message", e.err().asString());
+    value.addMember("data", e.detail());
+    response.addMember("id", e.id());
+    return response;
+}
+
+template <typename ProtocolServer>
 void BaseServer<ProtocolServer>::sendResponse(const TcpConnectionPtr& conn, const json::Value& response)
 {
     // 序列化 将json转移为string
@@ -70,4 +130,16 @@ void BaseServer<ProtocolServer>::sendResponse(const TcpConnectionPtr& conn, cons
             .append(os.get())
             .append("\r\n");
     conn->send(message);
+}
+
+template <typename ProtocolServer>
+ProtocolServer& BaseServer<ProtocolServer>::convert()
+{
+    return static_cast<ProtocolServer&>(*this);
+}
+
+template <typename ProtocolServer>
+const ProtocolServer& BaseServer<ProtocolServer>::convert() const
+{
+    return static_cast<const ProtocolServer&>(*this);
 }

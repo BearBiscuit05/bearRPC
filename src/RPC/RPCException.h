@@ -23,7 +23,7 @@ public:
     explicit RpcError(int errorCode):
             err_(fromErrorCode(errorCode)){}
 
-    const std::string asString() const
+    const char* asString() const
     { return errorString[err_]; }
 
     int asCode() const
@@ -45,7 +45,7 @@ private:
     }
 
     static inline const std::vector<int> errorCode = {-32700,-32600,-32601,-32602,-32603};
-    static inline const std::vector<std::string> errorString = {"Parse error","Invalid request","Method not found","Invalid params","Internal error"};
+    static inline const std::vector<char*> errorString = {"Parse error","Invalid request","Method not found","Invalid params","Internal error"};
 };
 
 class NotifyException : public std::exception
@@ -53,13 +53,13 @@ class NotifyException : public std::exception
 public:
     explicit NotifyException(RpcError err, const std::string detail):
             err_(err),detail_(detail){}
-    const std::string what() const noexcept{return err_.asString();}
+    const char* what() const noexcept{return err_.asString();}
     RpcError err() const{return err_;}
     const std::string detail() const{return detail_;}
 private:
     RpcError err_;
     const std::string detail_;
-}
+};
 
 class RequestException: public std::exception
 {
@@ -70,7 +70,7 @@ class RequestException: public std::exception
             err_(err),id_(new json::Value(json::TYPE_NULL)),detail_(detail){}
 
 
-    const std::string what() const noexcept{return err_.asString();}
+    const char* what() const noexcept{return err_.asString();}
     RpcError err() const{return err_;}
     json::Value& id(){return *id_;}
     const std::string detail() const{return detail_;}
@@ -79,7 +79,7 @@ private:
     RpcError err_;
     std::unique_ptr<json::Value> id_;
     const std::string detail_;
-}
+};
 
 class ResponseException: public std::exception
 {
@@ -90,7 +90,7 @@ public:
     ResponseException(const std::string msg, int id):
             hasId_(true),id_(id),msg_(msg){}
 
-    const std::string what() const noexcept{return msg_;}
+    const char* what() const noexcept{return (char*)msg_.c_str();}
     bool hasId() const{return hasId_;}
     int Id() const{return id_;}
 
@@ -104,7 +104,7 @@ class StubException: std::exception
 {
 public:
     explicit StubException(const std::string msg):msg_(msg){}
-    const std::string what() const noexcept{return msg_;}
+    const char* what() const noexcept{return (char*)msg_.c_str();}
 private:
     const std::string msg_;
 };

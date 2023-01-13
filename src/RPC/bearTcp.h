@@ -1,5 +1,6 @@
 #pragma once
 #include "utils.h"
+#include "RPCException.h"
 #include <jackson/FileReadStream.h>
 #include <jackson/Document.h>
 #include <jackson/Writer.h>
@@ -29,8 +30,8 @@ private:
     ProtocolServer& convert();
     const ProtocolServer& convert() const;
 
-// protected:
-//     json::Value wrapException(RequestException& e);
+protected:
+    json::Value wrapException(RequestException& e);
 
 private:
     TcpServer server_;
