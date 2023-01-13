@@ -5,15 +5,15 @@ project(bearRPC)
 set(CXX_FLAGS
         -fno-omit-frame-pointer # linux perf
         -Wall
-        -Wextra
+#        -Wextra
 #        -Werror
-        -Wconversion
-        -Wno-unused-parameter
-        -Wold-style-cast
-        -Woverloaded-virtual
-        -Wpointer-arith
-        -Wshadow
-        -Wwrite-strings
+#        -Wconversion
+#       -Wno-unused-parameter
+#        -Wold-style-cast
+#        -Woverloaded-virtual
+#        -Wpointer-arith
+#        -Wshadow
+#        -Wwrite-strings
         -std=c++17
         -march=native
         -rdynamic)

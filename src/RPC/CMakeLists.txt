@@ -1,6 +1,6 @@
 add_executable(read 
     RPCTest.cc 
-    utils.h
+    utils.h RPCException.h
     Serialization.h Serialization.cc
     bearTcp.h bearTcp.cc 
 )

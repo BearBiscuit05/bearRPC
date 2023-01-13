@@ -18,6 +18,11 @@
 
 typedef std::function<void(json::Value response)> RpcCallback;
 
+using std::placeholders::_1;
+using std::placeholders::_2;
+using std::placeholders::_3;
+using std::placeholders::_4;
+
 using ev::EventLoop;
 using ev::TcpConnection;
 using ev::TcpServer;
