@@ -4,7 +4,7 @@
 #include <bearTCP/Logger.h>
 #include <bearTCP/InetAddress.h>
 
-using namespace bear
+using namespace bear;
 
 InetAddress::InetAddress(uint16_t port, bool loopback)
 {

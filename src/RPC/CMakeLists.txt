@@ -12,5 +12,5 @@
 # target_link_libraries(Echoclinet tinyev)
 
 add_subdirectory(bearTCP)
-add_executable(tcptest test/tcptest.cc)
-target_link_libraries(tcptest bearTCP)
+add_executable(addrTest test/addrTest.cc)
+target_link_libraries(addrTest bearTCP)
