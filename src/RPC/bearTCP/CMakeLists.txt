@@ -1,7 +1,7 @@
 set(SOURCE_FILES
     Timestamp.h
     InetAddress.h InetAddress.cc
-    Logger.h Logger.cc
+    Logger.h Logger.c
 )
 
 add_library(bearTCP STATIC ${SOURCE_FILES})
