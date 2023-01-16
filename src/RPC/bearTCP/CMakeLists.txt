@@ -1,6 +1,7 @@
 set(SOURCE_FILES
-    Timestamp.h test.cc
-
+    Timestamp.h
+    InetAddress.h InetAddress.cc
+    Logger.h Logger.cc
 )
 
 add_library(bearTCP STATIC ${SOURCE_FILES})
@@ -9,5 +10,7 @@ install(TARGETS bearTCP DESTINATION lib)
 
 set(HEADERS
     Timestamp.h
+    InetAddress.h
+    Logger.h
 )
 install(FILES ${HEADERS} DESTINATION include)
