@@ -2,74 +2,130 @@
 // Created by frank on 17-9-1.
 //
 
-#ifndef TINYEV_TCPSERVER_H
-#define TINYEV_TCPSERVER_H
+#include <map>
 
-#include <vector>
-#include <thread>
-#include <mutex>
-#include <atomic>
-#include <condition_variable>
+#include <tinyev/Logger.h>
+#include <tinyev/EventLoop.h>
+#include <tinyev/TcpConnection.h>
+#include <tinyev/TcpServer.h>
 
-#include <tinyev/TcpServerSingle.h>
-#include <tinyev/InetAddress.h>
-#include <tinyev/Callbacks.h>
-#include <tinyev/noncopyable.h>
+using namespace ev;
 
-namespace ev
-{
-
-class EventLoopThread;
-class TcpServerSingle;
-class EventLoop;
-class InetAddress;
-
-class TcpServer: noncopyable
+class EchoServer
 {
 public:
+    EchoServer(EventLoop* loop, const InetAddress& addr, size_t numThread = 1, Nanosecond timeout = 5s)
+            : loop_(loop),
+              server_(loop, addr),
+              numThread_(numThread),
+              timeout_(timeout),
+              timer_(loop_->runEvery(timeout_, [this](){onTimeout();}))
+    {
+        server_.setConnectionCallback(std::bind(
+                &EchoServer::onConnection, this, _1));
+        server_.setMessageCallback(std::bind(
+                &EchoServer::onMessage, this, _1, _2));
+        server_.setWriteCompleteCallback(std::bind(
+                &EchoServer::onWriteComplete, this, _1));
+    }
 
-    TcpServer(EventLoop* loop, const InetAddress& local);
-    ~TcpServer();
-    // n == 0 || n == 1: all things run in baseLoop thread
-    // n > 1: set another (n - 1) eventLoop threads.
-    void setNumThread(size_t n);
-    // set all threads begin to loop and accept new connections
-    // except the baseLoop thread
-    void start();
+    ~EchoServer()
+    { loop_->cancelTimer(timer_); }
 
-    void setThreadInitCallback(const ThreadInitCallback& cb)
-    { threadInitCallback_ = cb; }
-    void setConnectionCallback(const ConnectionCallback& cb)
-    { connectionCallback_ = cb; }
-    void setMessageCallback(const MessageCallback& cb)
-    { messageCallback_ = cb; }
-    void setWriteCompleteCallback(const WriteCompleteCallback& cb)
-    { writeCompleteCallback_ = cb; }
+    void start()
+    {
+        // set thread num here
+        server_.setNumThread(numThread_);
+        server_.start();
+    }
+
+    void onConnection(const TcpConnectionPtr& conn)
+    {
+        INFO("connection %s is [%s]",
+             conn->name().c_str(),
+             conn->connected() ? "up":"down");
+
+        if (conn->connected()) {
+            conn->setHighWaterMarkCallback(
+                    std::bind(&EchoServer::onHighWaterMark, this, _1, _2),
+                    1024);
+            expireAfter(conn, timeout_);
+        }
+        else connections_.erase(conn);
+    }
+
+    void onMessage(const TcpConnectionPtr& conn, Buffer& buffer)
+    {
+        TRACE("connection %s recv %lu bytes",
+             conn->name().c_str(),
+             buffer.readableBytes());
+
+        // send will retrieve the buffer
+        conn->send(buffer);
+        expireAfter(conn, timeout_);
+    }
+
+    void onHighWaterMark(const TcpConnectionPtr& conn, size_t mark)
+    {
+        INFO("high water mark %lu bytes, stop read", mark);
+        conn->stopRead();
+        expireAfter(conn, 2 * timeout_);
+    }
+
+    void onWriteComplete(const TcpConnectionPtr& conn)
+    {
+        if (!conn->isReading()) {
+            INFO("write complete, start read");
+            conn->startRead();
+            expireAfter(conn, timeout_);
+        }
+    }
 
 private:
-    void startInLoop();
-    void runInThread(size_t index);
+    void expireAfter(const TcpConnectionPtr& conn, Nanosecond interval)
+    {
+        connections_[conn] = clock::nowAfter(interval);
+    }
 
-    typedef std::unique_ptr<std::thread> ThreadPtr;
-    typedef std::vector<ThreadPtr> ThreadPtrList;
-    typedef std::unique_ptr<TcpServerSingle> TcpServerSinglePtr;
-    typedef std::vector<EventLoop*> EventLoopList;
+    void onTimeout()
+    {
+        for (auto it = connections_.begin(); it != connections_.end(); ) {
+            if (it->second <= clock::now()) {
+                INFO("connection timeout force close");
+                it->first->forceClose();
+                it = connections_.erase(it);
+            }
+            else it++;
+        }
+    }
 
-    EventLoop* baseLoop_;
-    TcpServerSinglePtr baseServer_;
-    ThreadPtrList threads_;
-    EventLoopList eventLoops_;
-    size_t numThreads_;
-    std::atomic_bool started_;
-    InetAddress local_;
-    std::mutex mutex_;
-    std::condition_variable cond_;
-    ThreadInitCallback threadInitCallback_;
-    ConnectionCallback connectionCallback_;
-    MessageCallback messageCallback_;
-    WriteCompleteCallback writeCompleteCallback_;
+private:
+    EventLoop* loop_;
+    TcpServer server_;
+    const size_t numThread_;
+    const Nanosecond timeout_;
+    Timer* timer_;
+    typedef std::map<TcpConnectionPtr, Timestamp> ConnectionList;
+    ConnectionList connections_;
 };
 
-}
+int main()
+{
+    setLogLevel(LOG_LEVEL_TRACE);
+    EventLoop loop;
+    InetAddress addr(9877);
+    EchoServer server(&loop, addr, 1, 5s);
+    server.start();
 
-#endif //TINYEV_TCPSERVER_H
+    loop.runAfter(10s, [&](){
+        int countdown = 5;
+        INFO("server quit after %d second...", countdown);
+        loop.runEvery(1s, [&, countdown]() mutable {
+            INFO("server quit after %d second...", --countdown);
+            if (countdown == 0)
+                loop.quit();
+        });
+    });
+
+    loop.loop();
+}
