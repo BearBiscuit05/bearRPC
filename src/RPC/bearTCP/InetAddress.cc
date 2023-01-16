@@ -1,8 +1,8 @@
 #include <arpa/inet.h>
 #include <strings.h>
 
-#include <tinyev/Logger.h>
-#include <tinyev/InetAddress.h>
+#include <bearTCP/Logger.h>
+#include <bearTCP/InetAddress.h>
 
 using namespace bear
 
