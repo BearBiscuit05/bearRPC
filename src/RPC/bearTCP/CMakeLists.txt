@@ -1,6 +1,6 @@
 set(SOURCE_FILES
-    Timestamp.h
-     
+    Timestamp.h test.cc
+
 )
 
 add_library(bearTCP STATIC ${SOURCE_FILES})

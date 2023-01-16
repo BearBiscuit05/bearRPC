@@ -11,5 +11,6 @@
 # target_link_libraries(Echoserver tinyev)
 # target_link_libraries(Echoclinet tinyev)
 
-add_subdirectory(tcp)
+add_subdirectory(bearTCP)
 add_executable(tcptest test/tcptest.cc)
+target_link_libraries(tcptest bearTCP)
