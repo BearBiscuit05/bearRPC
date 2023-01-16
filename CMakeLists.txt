@@ -11,7 +11,9 @@ set(CXX_FLAGS
 string(REPLACE ";" " " CMAKE_CXX_FLAGS "${CXX_FLAGS}")
 set(EXECUTABLE_OUTPUT_PATH ${PROJECT_BINARY_DIR}/bin)
 set(LIBRARY_OUTPUT_PATH ${PROJECT_BINARY_DIR}/lib)
-include_directories(${PROJECT_SOURCE_DIR}/RPC/bearTCP)
+message(${PROJECT_SOURCE_DIR})
+include_directories(${PROJECT_SOURCE_DIR}/src/RPC
+	${PROJECT_SOURCE_DIR} ${PROJECT_BINARY_DIR})
 # add_subdirectory(3rd/tinyev )
 # add_subdirectory(3rd/jackson)
 add_subdirectory(src/RPC)

@@ -39,7 +39,5 @@ struct IntervalTypeCheckImpl
             std::is_same<T, Hour>::value;
 };
 
-// #define IntervalTypeCheck(T) \
-//     static_assert(IntervalTypeCheckImpl<T>::value, "bad interval type")
 }
 
