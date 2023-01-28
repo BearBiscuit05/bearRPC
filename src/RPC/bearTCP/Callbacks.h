@@ -12,4 +12,9 @@ using std::placeholders::_5;
 
 using namespace std::string_view_literals;
 
+// class Buffer;
+// class TcpConnection;
+class InetAddress;
+
+typedef std::function<void()> TimerCallback;
 }
